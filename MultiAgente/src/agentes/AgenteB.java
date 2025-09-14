@@ -1,51 +1,46 @@
 package agentes;
 
+import jade.core.AID;
 import jade.core.Agent;
 import jade.lang.acl.ACLMessage;
-import java.util.HashMap;
-import java.util.Map;
 
 public class AgenteB extends Agent {
-    private Map<String, Integer> catalogo = new HashMap<>();
-
     @Override
     protected void setup() {
         System.out.println(getLocalName() + " (Vendedor) iniciado.");
 
-        // Catálogo de productos
-        catalogo.put("laptop", 1000);
-        catalogo.put("telefono", 600);
-        catalogo.put("tablet", 400);
-
-        // Esperar pedidos
         while (true) {
-            ACLMessage pedido = blockingReceive();
-            if (pedido != null && pedido.getPerformative() == ACLMessage.REQUEST) {
-                System.out.println(getLocalName() + ": pedido recibido -> " + pedido.getContent());
+            ACLMessage mensaje = blockingReceive();
 
-                // Determinar el producto solicitado
-                String contenido = pedido.getContent().toLowerCase();
-                String productoEncontrado = null;
+            if (mensaje != null) {
+                switch (mensaje.getPerformative()) {
+                    case ACLMessage.REQUEST:
+                        // Cliente pide un producto
+                        System.out.println(getLocalName() + ": pedido recibido -> " + mensaje.getContent());
 
-                for (String producto : catalogo.keySet()) {
-                    if (contenido.contains(producto)) {
-                        productoEncontrado = producto;
+                        ACLMessage oferta = mensaje.createReply();
+                        oferta.setPerformative(ACLMessage.INFORM);
+                        oferta.setContent("Tengo la laptop a 800 USD");
+                        send(oferta);
+                        System.out.println(getLocalName() + ": oferta enviada al cliente.");
                         break;
-                    }
+
+                    case ACLMessage.CONFIRM:
+                        // Cliente acepta la compra → llamar al repartidor
+                        System.out.println(getLocalName() + ": cliente aceptó -> " + mensaje.getContent());
+
+                        ACLMessage ordenEntrega = new ACLMessage(ACLMessage.REQUEST);
+                        ordenEntrega.addReceiver(new AID("AgenteC", AID.ISLOCALNAME));
+                        ordenEntrega.setContent("Entrega de laptop al cliente");
+                        send(ordenEntrega);
+                        System.out.println(getLocalName() + ": orden enviada al repartidor.");
+                        break;
+
+                    case ACLMessage.DISCONFIRM:
+                        // Cliente rechaza
+                        System.out.println(getLocalName() + ": cliente rechazó la oferta.");
+                        break;
                 }
-
-                ACLMessage respuesta = new ACLMessage(ACLMessage.INFORM);
-                respuesta.addReceiver(pedido.getSender());
-
-                if (productoEncontrado != null) {
-                    int precio = catalogo.get(productoEncontrado);
-                    respuesta.setContent("El precio de la " + productoEncontrado + " es " + precio + " USD");
-                } else {
-                    respuesta.setContent("Producto no disponible.");
-                }
-
-                send(respuesta);
-                System.out.println(getLocalName() + ": respuesta enviada -> " + respuesta.getContent());
             }
         }
     }
