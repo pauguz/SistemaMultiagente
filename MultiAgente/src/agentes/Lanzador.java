@@ -9,20 +9,25 @@ import jade.wrapper.AgentController;
 public class Lanzador {
     public static void main(String[] args) {
         try {
+            // Inicializar la plataforma JADE
             Runtime rt = Runtime.instance();
             Profile p = new ProfileImpl();
-            AgentContainer mc = rt.createMainContainer(p);
+            p.setParameter(Profile.MAIN, "true");   // Contenedor principal
+            p.setParameter(Profile.GUI, "true");    // GUI de JADE para ver los agentes
+            AgentContainer mainContainer = rt.createMainContainer(p);
 
-            AgentController a = mc.createNewAgent("AgenteA", AgenteA.class.getName(), null);
-            AgentController b = mc.createNewAgent("AgenteB", AgenteB.class.getName(), null);
-            AgentController c = mc.createNewAgent("AgenteC", AgenteC.class.getName(), null);
+            // Crear agentes
+            AgentController cliente = mainContainer.createNewAgent("AgenteA", "agentes.Cliente", null);
+            AgentController vendedor = mainContainer.createNewAgent("AgenteB", "agentes.Vendedor", null);
+            AgentController repartidor = mainContainer.createNewAgent("AgenteC", "agentes.Repartidor", null);
 
-            b.start();
-            c.start();
-            a.start();
+            // Iniciar agentes
+            cliente.start();
+            vendedor.start();
+            repartidor.start();
+
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
 }
-
