@@ -14,7 +14,10 @@ public class AgenteC extends Agent {
             if (mensaje != null && mensaje.getPerformative() == ACLMessage.REQUEST) {
                 System.out.println(getLocalName() + ": recibido -> " + mensaje.getContent());
                 System.out.println(getLocalName() + ": en camino con la entrega...");
+                Thread.sleep(3000); // 3 segundos
+                System.out.println(getLocalName() + ": entrega completada al cliente.");
             }
+
         }
     }
 }
